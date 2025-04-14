@@ -36,7 +36,7 @@ pipeline {
         stage('Run Container from DockerHub') {
             steps {
                 sh "docker pull $IMAGE_NAME"
-                sh "docker run -d -p 8080:8080 $IMAGE_NAME"
+                sh 'docker run -d -p 8081:8080 tirth1903/jenkins'
             }
         }
     }
