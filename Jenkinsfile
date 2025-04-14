@@ -1,6 +1,11 @@
-// Jenkins pipeline
 pipeline {
     agent any
+
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        IMAGE_NAME = 'tirth1903/jenkins'
+    }
+
     stages {
         stage('Clone Code') {
             steps {
@@ -8,15 +13,30 @@ pipeline {
             }
         }
 
-        stage('Installing Required Dependencies') {
+        stage('Build Docker Image') {
             steps {
-                sh 'npm install'
+                script {
+                    if (!fileExists('Dockerfile')) {
+                        error "Dockerfile not found!"
+                    }
+                    sh "docker build -t $IMAGE_NAME ."
+                }
             }
         }
 
-        stage('Running App Locally') {
+        stage('Push to DockerHub') {
             steps {
-                sh 'node app.js'
+                script {
+                    sh "echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin"
+                    sh "docker push $IMAGE_NAME"
+                }
+            }
+        }
+
+        stage('Run Container from DockerHub') {
+            steps {
+                sh "docker pull $IMAGE_NAME"
+                sh "docker run -d -p 8080:8080 $IMAGE_NAME"
             }
         }
     }
